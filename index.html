@@ -1,148 +1,482 @@
-textContent =
-  "Round " + (currentRound + 1) + " — " + questions[currentRound];
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Eric vs Martin</title>
 
- document.getElementById("progress").textContent =
-  "Round " + (currentRound + 1) + " of 9";
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
- document.getElementById("ericPhoto").src =
-  "images/eric-" + (currentRound + 1) + ".jpg";
-
- document.getElementById("martinPhoto").src =
-  "images/martin-" + (currentRound + 1) + ".jpg";
-
- const existing = currentVoterVote();
- setVoteButtons(!!existing);
-
- message.textContent = existing
-  ? "Your vote in this round: " + existing.choice
-  : "Choose your favorite!";
+<style>
+:root {
+  --sky: #A9DCEB;
+  --white: #FFFFFF;
+  --burgundy: #800020;
+  --navy: #142B4A;
+  --light: #EAF7FB;
 }
 
-async function loadVotes(){
- if(!supabaseClient){
-  message.textContent =
-   "Database is not connected yet. Complete the Supabase setup.";
-  return;
- }
-
- const {data,error} = await supabaseClient
-  .from("votes")
-  .select("voter_id,round_no,choice");
-
- if(error){
-  message.textContent = "Could not load votes: " + error.message;
-  return;
- }
-
- allVotes = data || [];
- renderRound();
+* {
+  box-sizing: border-box;
 }
 
-async function vote(choice){
- if(!supabaseClient){
-  message.textContent = "Connect the database first.";
-  return;
- }
+body {
+  margin: 0;
+  padding: 20px;
+  font-family: Arial, sans-serif;
+  background: linear-gradient(135deg, var(--sky), var(--white));
+  color: var(--navy);
+  min-height: 100vh;
+}
 
- if(currentVoterVote()){
-  message.textContent = "You already voted in this round.";
-  return;
- }
+.container {
+  max-width: 850px;
+  margin: auto;
+}
 
- setVoteButtons(true);
- message.textContent = "Saving your vote...";
+header {
+  text-align: center;
+  background: var(--navy);
+  color: white;
+  padding: 25px 15px;
+  border-radius: 22px;
+  margin-bottom: 20px;
+}
 
- const {error} = await supabaseClient
-  .from("votes")
-  .insert({
-   voter_id: voterSelect.value,
-   round_no: currentRound + 1,
-   choice: choice
+header h1 {
+  margin: 0 0 8px;
+  font-size: 32px;
+}
+
+header p {
+  margin: 0;
+  color: var(--sky);
+}
+
+.panel {
+  background: white;
+  padding: 22px;
+  border-radius: 20px;
+  margin-bottom: 18px;
+  box-shadow: 0 5px 18px #142b4a18;
+}
+
+label {
+  display: block;
+  font-weight: bold;
+  margin-bottom: 9px;
+}
+
+select {
+  width: 100%;
+  padding: 13px;
+  border: 2px solid var(--sky);
+  border-radius: 12px;
+  font-size: 16px;
+  color: var(--navy);
+  background: white;
+}
+
+.question {
+  text-align: center;
+  font-size: 23px;
+  font-weight: bold;
+  color: var(--burgundy);
+  margin: 10px 0 20px;
+}
+
+.round {
+  text-align: center;
+  color: var(--navy);
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+.players {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.player {
+  text-align: center;
+  background: var(--light);
+  border: 2px solid var(--sky);
+  border-radius: 16px;
+  padding: 12px;
+}
+
+.player h3 {
+  color: var(--navy);
+  margin: 5px 0 12px;
+}
+
+.player img {
+  width: 100%;
+  height: 240px;
+  object-fit: cover;
+  border-radius: 12px;
+  background: var(--sky);
+}
+
+button {
+  border: none;
+  border-radius: 12px;
+  padding: 13px 17px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  margin: 5px;
+}
+
+.vote {
+  width: 100%;
+  background: var(--burgundy);
+  color: white;
+}
+
+.vote:hover {
+  background: var(--navy);
+}
+
+.both {
+  display: block;
+  width: 100%;
+  background: var(--navy);
+  color: white;
+  margin: 15px 0;
+}
+
+.nav-buttons {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  margin-top: 15px;
+}
+
+.nav-buttons button {
+  background: var(--sky);
+  color: var(--navy);
+}
+
+.nav-buttons button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.status {
+  text-align: center;
+  font-weight: bold;
+  margin: 12px 0;
+  min-height: 22px;
+}
+
+.progress {
+  height: 10px;
+  background: var(--sky);
+  border-radius: 20px;
+  overflow: hidden;
+  margin: 15px 0;
+}
+
+.progress-bar {
+  height: 100%;
+  background: var(--burgundy);
+  width: 0%;
+}
+
+.result-row {
+  margin: 18px 0;
+}
+
+.result-label {
+  display: flex;
+  justify-content: space-between;
+  font-weight: bold;
+  margin-bottom: 7px;
+}
+
+.result-track {
+  background: var(--sky);
+  height: 16px;
+  border-radius: 20px;
+  overflow: hidden;
+}
+
+.result-fill {
+  height: 100%;
+  background: var(--burgundy);
+}
+
+.winner {
+  text-align: center;
+  padding: 20px;
+  border-radius: 15px;
+  background: var(--light);
+  color: var(--burgundy);
+  font-size: 22px;
+  font-weight: bold;
+}
+
+@media (max-width: 520px) {
+  body { padding: 12px; }
+  .player img { height: 180px; }
+  header h1 { font-size: 27px; }
+  .question { font-size: 20px; }
+}
+</style>
+</head>
+
+<body>
+<div class="container">
+
+<header>
+  <h1>ERIC VS MARTIN</h1>
+  <p>The Ultimate Photo Battle</p>
+</header>
+
+<div class="panel">
+  <label for="voter">Choose your name:</label>
+  <select id="voter">
+    <option value="husseina">Husseina</option>
+    <option value="layla">Layla</option>
+  </select>
+  <p class="status" id="connection">Connecting...</p>
+</div>
+
+<div class="panel" id="game">
+  <div class="round" id="roundText"></div>
+  <div class="progress">
+    <div class="progress-bar" id="progressBar"></div>
+  </div>
+
+  <div class="question" id="question"></div>
+
+  <div class="players">
+    <div class="player">
+      <h3>ERIC</h3>
+      <img id="ericImage" src="images/eric-1.jpg" alt="Eric photo">
+      <button class="vote" onclick="submitVote('Eric')">Vote Eric</button>
+    </div>
+
+    <div class="player">
+      <h3>MARTIN</h3>
+      <img id="martinImage" src="images/martin-1.jpg" alt="Martin photo">
+      <button class="vote" onclick="submitVote('Martin')">Vote Martin</button>
+    </div>
+  </div>
+
+  <button class="both" onclick="submitVote('Both')">Both ❤️</button>
+
+  <div class="status" id="status"></div>
+
+  <div class="nav-buttons">
+    <button id="prevBtn" onclick="changeRound(-1)">← Previous</button>
+    <button id="nextBtn" onclick="changeRound(1)">Next →</button>
+  </div>
+</div>
+
+<div class="panel">
+  <h2 style="text-align:center;color:#800020">Voting Results</h2>
+  <div id="results">Loading results...</div>
+</div>
+
+<footer>
+  Made with love ♡ Eric vs Martin
+</footer>
+
+</div>
+
+<script>
+const SUPABASE_URL = "https://jentdsqzefncwrvcrtib.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_hYILoPDfZwAzwjPC7-Bbnw_FVNUlwYv";
+
+const db = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_ANON_KEY
+);
+
+const questions = [
+  "First Club They Played For",
+  "First Appearance with the National Team",
+  "Best Look in Their Current Clubs",
+  "Their Prime",
+  "Best Outfit They Have Worn",
+  "Best Haircut",
+  "Their Look in the Latest Advertisement",
+  "Their Look in the Latest World Cup",
+  "Worst Photo"
+];
+
+let currentRound = 1;
+let myVotes = {};
+
+const voterSelect = document.getElementById("voter");
+
+async function checkConnection() {
+  const { error } = await db.from("votes").select("id").limit(1);
+
+  document.getElementById("connection").textContent =
+    error ? "Connection error: " + error.message : "Connected successfully ✓";
+}
+
+async function loadMyVotes() {
+  const voter = voterSelect.value;
+
+  const { data, error } = await db
+    .from("votes")
+    .select("round_no, choice")
+    .eq("voter_id", voter);
+
+  if (error) {
+    document.getElementById("status").textContent = error.message;
+    return;
+  }
+
+  myVotes = {};
+  data.forEach(vote => {
+    myVotes[vote.round_no] = vote.choice;
   });
 
- if(error){
-  message.textContent = error.code === "23505"
-   ? "You already voted in this round."
-   : "Vote failed: " + error.message;
-  await loadVotes();
-  return;
- }
-
- await loadVotes();
- message.textContent = "Vote saved: " + choice;
-}
-
-function nextRound(){
- if(currentRound < 8){
-  currentRound++;
   renderRound();
- }
 }
 
-function previousRound(){
- if(currentRound > 0){
-  currentRound--;
-  renderRound();
- }
+function renderRound() {
+  document.getElementById("roundText").textContent =
+    `ROUND ${currentRound} OF 9`;
+
+  document.getElementById("question").textContent =
+    questions[currentRound - 1];
+
+  document.getElementById("ericImage").src =
+    `images/eric-${currentRound}.jpg`;
+
+  document.getElementById("martinImage").src =
+    `images/martin-${currentRound}.jpg`;
+
+  document.getElementById("progressBar").style.width =
+    `${(currentRound / 9) * 100}%`;
+
+  document.getElementById("prevBtn").disabled =
+    currentRound === 1;
+
+  document.getElementById("nextBtn").disabled =
+    currentRound === 9;
+
+  document.getElementById("status").textContent =
+    myVotes[currentRound]
+      ? `Your vote: ${myVotes[currentRound]} ✓`
+      : "Choose your favorite photo!";
 }
 
-async function showResults(){
- if(!supabaseClient){
-  message.textContent = "Connect the database first.";
-  return;
- }
+async function submitVote(choice) {
+  const voter = voterSelect.value;
 
- await loadVotes();
-
- let eric = 0;
- let martin = 0;
-
- allVotes.forEach(v => {
-  if(v.choice === "Eric") eric += 1;
-  if(v.choice === "Martin") martin += 1;
-  if(v.choice === "Both"){
-   eric += 0.5;
-   martin += 0.5;
+  if (myVotes[currentRound]) {
+    alert("You have already voted in this round!");
+    return;
   }
- });
 
- const total = eric + martin;
- const ericPercent = total ? eric / total * 100 : 0;
- const martinPercent = total ? martin / total * 100 : 0;
+  const { error } = await db.from("votes").insert({
+    voter_id: voter,
+    round_no: currentRound,
+    choice: choice
+  });
 
- document.getElementById("ericScore").textContent =
-  "Eric: " + ericPercent.toFixed(1) + "% (" + eric + " points)";
+  if (error) {
+    if (error.code === "23505") {
+      alert("You have already voted in this round!");
+      await loadMyVotes();
+    } else {
+      alert("Vote failed: " + error.message);
+    }
+    return;
+  }
 
- document.getElementById("martinScore").textContent =
-  "Martin: " + martinPercent.toFixed(1) + "% (" + martin + " points)";
+  myVotes[currentRound] = choice;
 
- document.getElementById("ericBar").style.width = ericPercent + "%";
- document.getElementById("martinBar").style.width = martinPercent + "%";
+  document.getElementById("status").textContent =
+    `Your vote: ${choice} ✓`;
 
- document.getElementById("winner").textContent =
-  eric > martin ? "Winner: Eric 🏆" :
-  martin > eric ? "Winner: Martin 🏆" :
-  total === 0 ? "No votes yet" : "It's a tie!";
+  alert("Your vote has been saved!");
 
- document.getElementById("voteCount").textContent =
-  "Total votes submitted: " + allVotes.length + " / 18";
-
- document.getElementById("results").classList.remove("hidden");
- document.getElementById("results").scrollIntoView({behavior:"smooth"});
+  await loadResults();
 }
 
-voterSelect.addEventListener("change",renderRound);
+function changeRound(direction) {
+  currentRound += direction;
 
-if(connected()){
- supabaseClient = window.supabase.createClient(
-  SUPABASE_URL,SUPABASE_ANON_KEY
- );
- loadVotes();
-}else{
- renderRound();
- message.textContent =
-  "Add your Supabase project details to enable voting.";
+  if (currentRound < 1) currentRound = 1;
+  if (currentRound > 9) currentRound = 9;
+
+  renderRound();
 }
+
+async function loadResults() {
+  const { data, error } = await db
+    .from("votes")
+    .select("round_no, choice");
+
+  const results = document.getElementById("results");
+
+  if (error) {
+    results.textContent = "Could not load results: " + error.message;
+    return;
+  }
+
+  let eric = 0;
+  let martin = 0;
+
+  data.forEach(vote => {
+    if (vote.choice === "Eric") eric += 1;
+    if (vote.choice === "Martin") martin += 1;
+    if (vote.choice === "Both") {
+      eric += 0.5;
+      martin += 0.5;
+    }
+  });
+
+  const total = eric + martin;
+
+  const ericPercent = total ? (eric / total) * 100 : 0;
+  const martinPercent = total ? (martin / total) * 100 : 0;
+
+  let winner = "It's a tie!";
+
+  if (eric > martin) winner = "ERIC WINS!";
+  if (martin > eric) winner = "MARTIN WINS!";
+
+  results.innerHTML = `
+    <div class="result-row">
+      <div class="result-label">
+        <span>ERIC</span>
+        <span>${ericPercent.toFixed(1)}%</span>
+      </div>
+      <div class="result-track">
+        <div class="result-fill" style="width:${ericPercent}%"></div>
+      </div>
+    </div>
+
+    <div class="result-row">
+      <div class="result-label">
+        <span>MARTIN</span>
+        <span>${martinPercent.toFixed(1)}%</span>
+      </div>
+      <div class="result-track">
+        <div class="result-fill" style="width:${martinPercent}%"></div>
+      </div>
+    </div>
+
+    <div class="winner">${winner}</div>
+    <p style="text-align:center">Total votes: ${data.length} / 18</p>
+  `;
+}
+
+voterSelect.addEventListener("change", loadMyVotes);
+
+checkConnection();
+loadMyVotes();
+loadResults();
 </script>
 </body>
 </html>
