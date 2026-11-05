@@ -1,0 +1,148 @@
+textContent =
+  "Round " + (currentRound + 1) + " — " + questions[currentRound];
+
+ document.getElementById("progress").textContent =
+  "Round " + (currentRound + 1) + " of 9";
+
+ document.getElementById("ericPhoto").src =
+  "images/eric-" + (currentRound + 1) + ".jpg";
+
+ document.getElementById("martinPhoto").src =
+  "images/martin-" + (currentRound + 1) + ".jpg";
+
+ const existing = currentVoterVote();
+ setVoteButtons(!!existing);
+
+ message.textContent = existing
+  ? "Your vote in this round: " + existing.choice
+  : "Choose your favorite!";
+}
+
+async function loadVotes(){
+ if(!supabaseClient){
+  message.textContent =
+   "Database is not connected yet. Complete the Supabase setup.";
+  return;
+ }
+
+ const {data,error} = await supabaseClient
+  .from("votes")
+  .select("voter_id,round_no,choice");
+
+ if(error){
+  message.textContent = "Could not load votes: " + error.message;
+  return;
+ }
+
+ allVotes = data || [];
+ renderRound();
+}
+
+async function vote(choice){
+ if(!supabaseClient){
+  message.textContent = "Connect the database first.";
+  return;
+ }
+
+ if(currentVoterVote()){
+  message.textContent = "You already voted in this round.";
+  return;
+ }
+
+ setVoteButtons(true);
+ message.textContent = "Saving your vote...";
+
+ const {error} = await supabaseClient
+  .from("votes")
+  .insert({
+   voter_id: voterSelect.value,
+   round_no: currentRound + 1,
+   choice: choice
+  });
+
+ if(error){
+  message.textContent = error.code === "23505"
+   ? "You already voted in this round."
+   : "Vote failed: " + error.message;
+  await loadVotes();
+  return;
+ }
+
+ await loadVotes();
+ message.textContent = "Vote saved: " + choice;
+}
+
+function nextRound(){
+ if(currentRound < 8){
+  currentRound++;
+  renderRound();
+ }
+}
+
+function previousRound(){
+ if(currentRound > 0){
+  currentRound--;
+  renderRound();
+ }
+}
+
+async function showResults(){
+ if(!supabaseClient){
+  message.textContent = "Connect the database first.";
+  return;
+ }
+
+ await loadVotes();
+
+ let eric = 0;
+ let martin = 0;
+
+ allVotes.forEach(v => {
+  if(v.choice === "Eric") eric += 1;
+  if(v.choice === "Martin") martin += 1;
+  if(v.choice === "Both"){
+   eric += 0.5;
+   martin += 0.5;
+  }
+ });
+
+ const total = eric + martin;
+ const ericPercent = total ? eric / total * 100 : 0;
+ const martinPercent = total ? martin / total * 100 : 0;
+
+ document.getElementById("ericScore").textContent =
+  "Eric: " + ericPercent.toFixed(1) + "% (" + eric + " points)";
+
+ document.getElementById("martinScore").textContent =
+  "Martin: " + martinPercent.toFixed(1) + "% (" + martin + " points)";
+
+ document.getElementById("ericBar").style.width = ericPercent + "%";
+ document.getElementById("martinBar").style.width = martinPercent + "%";
+
+ document.getElementById("winner").textContent =
+  eric > martin ? "Winner: Eric 🏆" :
+  martin > eric ? "Winner: Martin 🏆" :
+  total === 0 ? "No votes yet" : "It's a tie!";
+
+ document.getElementById("voteCount").textContent =
+  "Total votes submitted: " + allVotes.length + " / 18";
+
+ document.getElementById("results").classList.remove("hidden");
+ document.getElementById("results").scrollIntoView({behavior:"smooth"});
+}
+
+voterSelect.addEventListener("change",renderRound);
+
+if(connected()){
+ supabaseClient = window.supabase.createClient(
+  SUPABASE_URL,SUPABASE_ANON_KEY
+ );
+ loadVotes();
+}else{
+ renderRound();
+ message.textContent =
+  "Add your Supabase project details to enable voting.";
+}
+</script>
+</body>
+</html>
