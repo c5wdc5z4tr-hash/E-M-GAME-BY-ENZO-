@@ -22,9 +22,7 @@
   --text: #49202F;
 }
 
-* {
-  box-sizing: border-box;
-}
+* { box-sizing: border-box; }
 
 body {
   margin: 0;
@@ -66,13 +64,8 @@ header h1 {
   line-height: 1.3;
 }
 
-.eric-title {
-  color: #4BAECF;
-}
-
-.martin-title {
-  color: var(--burgundy);
-}
+.eric-title { color: #4BAECF; }
+.martin-title { color: var(--burgundy); }
 
 .vs {
   color: var(--burgundy);
@@ -199,13 +192,8 @@ select {
   font-weight: 900;
 }
 
-.eric-card h3 {
-  color: #3999B9;
-}
-
-.martin-card h3 {
-  color: var(--burgundy);
-}
+.eric-card h3 { color: #3999B9; }
+.martin-card h3 { color: var(--burgundy); }
 
 .photo-frame {
   width: 100%;
@@ -215,11 +203,7 @@ select {
   background: white;
 }
 
-.martin-card .photo-frame {
-  border-color: #D9A0B2;
-}
-
-/* FULL PHOTO WITHOUT CROPPING */
+.martin-card .photo-frame { border-color: #D9A0B2; }
 
 .player img {
   display: block;
@@ -250,6 +234,12 @@ select {
 .vote-button:hover {
   transform: translateY(-3px);
   filter: brightness(1.04);
+}
+
+.vote-button:disabled {
+  opacity: .5;
+  cursor: not-allowed;
+  transform: none;
 }
 
 .eric-button {
@@ -326,13 +316,8 @@ select {
   transition: width .4s;
 }
 
-.quick-result span:first-child {
-  color: #3999B9;
-}
-
-.quick-result span:last-child {
-  color: var(--burgundy);
-}
+.quick-result span:first-child { color: #3999B9; }
+.quick-result span:last-child { color: var(--burgundy); }
 
 /* NAVIGATION */
 
@@ -357,9 +342,7 @@ select {
   transition: .2s;
 }
 
-.nav-button:hover {
-  background: var(--sky);
-}
+.nav-button:hover { background: var(--sky); }
 
 /* FINAL RESULTS */
 
@@ -398,13 +381,8 @@ select {
   font-weight: 800;
 }
 
-.eric-label {
-  color: #3999B9;
-}
-
-.martin-label {
-  color: var(--burgundy);
-}
+.eric-label { color: #3999B9; }
+.martin-label { color: var(--burgundy); }
 
 .result-bar {
   height: 17px;
@@ -570,34 +548,19 @@ footer span {
 /* MOBILE */
 
 @media (max-width: 600px) {
-  body {
-    padding: 17px 9px;
-  }
+  body { padding: 17px 9px; }
 
-  .game-card {
-    padding: 20px 9px;
-  }
-
-  .players {
-    gap: 9px;
-  }
-
-  .player {
-    padding: 7px;
-  }
-
-  .player h3 {
-    font-size: 14px;
-  }
+  .game-card { padding: 20px 9px; }
+  .players { gap: 9px; }
+  .player { padding: 7px; }
+  .player h3 { font-size: 14px; }
 
   .vote-button {
     min-height: 47px;
     padding: 7px 3px;
   }
 
-  .both-button {
-    font-size: 17px;
-  }
+  .both-button { font-size: 17px; }
 
   .round-pill {
     font-size: 12px;
@@ -610,22 +573,15 @@ footer span {
     font-size: 11px;
   }
 
-  .results-card {
-    padding: 20px 9px;
-  }
+  .results-card { padding: 20px 9px; }
 
   .results-pill {
     font-size: 13px;
     padding: 10px 23px;
   }
 
-  .voter-panel {
-    gap: 8px;
-  }
-
-  .voter-panel label {
-    font-size: 17px;
-  }
+  .voter-panel { gap: 8px; }
+  .voter-panel label { font-size: 17px; }
 
   .nav-button {
     font-size: 11px;
@@ -742,15 +698,15 @@ footer span {
   </div>
 </section>
 
-<!-- GAME OVER SCREEN -->
+<!-- INDIVIDUAL GAME OVER SCREEN -->
 
 <div class="game-over" id="gameOver">
   <div class="game-over-card">
     <div class="game-crown">♛</div>
-    <div class="game-over-label">THE BATTLE IS OVER</div>
+    <div class="game-over-label">YOUR BATTLE IS OVER</div>
     <h1>GAME OVER</h1>
-    <p class="champion-title">THE CHAMPION IS</p>
-    <h2 id="finalWinner">ERIC 👑</h2>
+    <p class="champion-title">YOU COMPLETED ALL 9 ROUNDS!</p>
+    <h2 id="finalWinner">WELL DONE! 👑</h2>
 
     <div class="final-score">
       <div>
@@ -763,7 +719,8 @@ footer span {
       </div>
     </div>
 
-    <p id="finalVotes">18 / 18 VOTES</p>
+    <p id="finalVotes">9 / 9 ROUNDS COMPLETED</p>
+
     <div class="game-over-message">
       ♛ CONGRATULATIONS! ♛
     </div>
@@ -806,6 +763,8 @@ const questions = [
 ];
 
 let currentRound = 1;
+let allVotes = [];
+let submittingVote = false;
 
 /* DISPLAY ROUND */
 
@@ -825,6 +784,7 @@ function showRound() {
   document.getElementById("message").style.display = "none";
 
   loadRoundResults();
+  updatePlayerGameOver();
 }
 
 /* MESSAGE */
@@ -835,9 +795,85 @@ function showMessage(text) {
   box.style.display = "block";
 }
 
+/* GET COMPLETED ROUNDS FOR A VOTER */
+
+function getCompletedRounds(voter) {
+  return new Set(
+    allVotes
+      .filter(vote => vote.voter_id === voter)
+      .map(vote => Number(vote.round_no))
+  );
+}
+
+/* CHECK WHETHER THE SELECTED PLAYER FINISHED */
+
+function updatePlayerGameOver() {
+  const voter = document.getElementById("voter").value;
+  const overlay = document.getElementById("gameOver");
+
+  if (!voter) {
+    overlay.style.display = "none";
+    return;
+  }
+
+  const completedRounds = getCompletedRounds(voter);
+
+  if (completedRounds.size >= 9) {
+    showFinalScreen(voter);
+  } else {
+    overlay.style.display = "none";
+  }
+}
+
+/* SHOW PERSONAL GAME OVER */
+
+function showFinalScreen(voter) {
+  const overlay = document.getElementById("gameOver");
+
+  let eric = 0;
+  let martin = 0;
+
+  allVotes.forEach(vote => {
+    if (vote.choice === "Eric") eric++;
+    if (vote.choice === "Martin") martin++;
+
+    if (vote.choice === "Both") {
+      eric += 0.5;
+      martin += 0.5;
+    }
+  });
+
+  const total = eric + martin;
+  const ericPct = total ? (eric / total) * 100 : 0;
+  const martinPct = total ? (martin / total) * 100 : 0;
+
+  document.getElementById("finalEric").textContent =
+    ericPct.toFixed(1) + "%";
+
+  document.getElementById("finalMartin").textContent =
+    martinPct.toFixed(1) + "%";
+
+  document.getElementById("finalVotes").textContent =
+    "9 / 9 ROUNDS COMPLETED BY " + voter.toUpperCase();
+
+  let status = "CURRENTLY TIED 👑";
+
+  if (eric > martin) {
+    status = "ERIC IS LEADING 👑";
+  } else if (martin > eric) {
+    status = "MARTIN IS LEADING 👑";
+  }
+
+  document.getElementById("finalWinner").textContent = status;
+
+  overlay.style.display = "flex";
+}
+
 /* SUBMIT VOTE */
 
 async function submitVote(choice) {
+  if (submittingVote) return;
+
   const voter = document.getElementById("voter").value;
 
   if (!voter) {
@@ -845,21 +881,22 @@ async function submitVote(choice) {
     return;
   }
 
-  const { data: existing, error: checkError } = await db
-    .from("votes")
-    .select("id")
-    .eq("voter_id", voter)
-    .eq("round_no", currentRound);
+  const completedRounds = getCompletedRounds(voter);
 
-  if (checkError) {
-    showMessage("Error: " + checkError.message);
+  if (completedRounds.size >= 9) {
+    showFinalScreen(voter);
     return;
   }
 
-  if (existing && existing.length > 0) {
+  if (completedRounds.has(currentRound)) {
     showMessage("You already voted in this round!");
     return;
   }
+
+  submittingVote = true;
+
+  const buttons = document.querySelectorAll(".vote-button");
+  buttons.forEach(button => button.disabled = true);
 
   const { error } = await db
     .from("votes")
@@ -869,9 +906,13 @@ async function submitVote(choice) {
       choice: choice
     });
 
+  submittingVote = false;
+  buttons.forEach(button => button.disabled = false);
+
   if (error) {
     if (error.code === "23505") {
       showMessage("You already voted in this round!");
+      await loadResults();
     } else {
       showMessage("Vote error: " + error.message);
     }
@@ -921,7 +962,7 @@ async function loadRoundResults() {
     ericPct + "%";
 }
 
-/* GLOBAL RESULTS AND GAME OVER */
+/* GLOBAL RESULTS */
 
 async function loadResults() {
   const { data, error } = await db
@@ -934,12 +975,12 @@ async function loadResults() {
     return;
   }
 
+  allVotes = data || [];
+
   let eric = 0;
   let martin = 0;
-  let husseinaVotes = 0;
-  let laylaVotes = 0;
 
-  data.forEach(vote => {
+  allVotes.forEach(vote => {
     if (vote.choice === "Eric") eric++;
     if (vote.choice === "Martin") martin++;
 
@@ -947,9 +988,6 @@ async function loadResults() {
       eric += 0.5;
       martin += 0.5;
     }
-
-    if (vote.voter_id === "husseina") husseinaVotes++;
-    if (vote.voter_id === "layla") laylaVotes++;
   });
 
   const total = eric + martin;
@@ -969,7 +1007,7 @@ async function loadResults() {
     martinPct + "%";
 
   document.getElementById("totalVotes").textContent =
-    data.length + " / 18 VOTES";
+    allVotes.length + " / 18 VOTES";
 
   let winner = "♛ WAITING FOR VOTES...";
 
@@ -983,35 +1021,7 @@ async function loadResults() {
 
   document.getElementById("winner").textContent = winner;
 
-  /* CHECK ALL 18 VOTES */
-
-  if (husseinaVotes === 9 && laylaVotes === 9) {
-
-    document.getElementById("finalEric").textContent =
-      ericPct.toFixed(1) + "%";
-
-    document.getElementById("finalMartin").textContent =
-      martinPct.toFixed(1) + "%";
-
-    document.getElementById("finalVotes").textContent =
-      data.length + " / 18 VOTES COMPLETED";
-
-    let finalWinner = "IT'S A TIE! 👑";
-
-    if (eric > martin) {
-      finalWinner = "ERIC 👑";
-    } else if (martin > eric) {
-      finalWinner = "MARTIN 👑";
-    }
-
-    document.getElementById("finalWinner").textContent =
-      finalWinner;
-
-    document.getElementById("gameOver").style.display = "flex";
-
-  } else {
-    document.getElementById("gameOver").style.display = "none";
-  }
+  updatePlayerGameOver();
 }
 
 /* NAVIGATION */
@@ -1030,6 +1040,13 @@ function previousRound() {
   }
 }
 
+/* CHANGE PLAYER */
+
+document.getElementById("voter").addEventListener("change", () => {
+  document.getElementById("message").style.display = "none";
+  updatePlayerGameOver();
+});
+
 /* START GAME */
 
 showRound();
@@ -1037,9 +1054,9 @@ loadResults();
 
 /* AUTO REFRESH */
 
-setInterval(() => {
-  loadResults();
-  loadRoundResults();
+setInterval(async () => {
+  await loadResults();
+  await loadRoundResults();
 }, 10000);
 
 </script>
