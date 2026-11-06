@@ -1,516 +1,539 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Eric vs Martin</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Eric vs Martin - E&M Game</title>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-<style>
-:root {
-  --sky: #A9DCEB;
-  --white: #FFFFFF;
-  --burgundy: #800020;
-  --navy: #142B4A;
-  --light: #EAF7FB;
-}
+  <style>
+    :root {
+      --sky: #A9DCEB;
+      --white: #FFFFFF;
+      --burgundy: #800020;
+      --navy: #142B4A;
+      --light: #EAF7FB;
+    }
 
-* {
-  box-sizing: border-box;
-}
+    * {
+      box-sizing: border-box;
+    }
 
-body {
-  margin: 0;
-  padding: 20px;
-  font-family: Arial, sans-serif;
-  background: linear-gradient(135deg, var(--sky), var(--white));
-  color: var(--navy);
-  min-height: 100vh;
-}
+    body {
+      margin: 0;
+      padding: 20px;
+      background: var(--light);
+      color: var(--navy);
+      font-family: Arial, sans-serif;
+    }
 
-.container {
-  max-width: 850px;
-  margin: auto;
-}
+    .container {
+      width: 100%;
+      max-width: 1000px;
+      margin: auto;
+    }
 
-header {
-  text-align: center;
-  background: var(--navy);
-  color: white;
-  padding: 25px 15px;
-  border-radius: 22px;
-  margin-bottom: 20px;
-}
+    header {
+      text-align: center;
+      background: var(--navy);
+      color: white;
+      padding: 28px 15px;
+      border-radius: 18px;
+      margin-bottom: 22px;
+    }
 
-header h1 {
-  margin: 0 0 8px;
-  font-size: 32px;
-}
+    header h1 {
+      margin: 0 0 10px;
+      font-size: 32px;
+    }
 
-header p {
-  margin: 0;
-  color: var(--sky);
-}
+    header p {
+      margin: 0;
+      color: var(--sky);
+    }
 
-.panel {
-  background: white;
-  padding: 22px;
-  border-radius: 20px;
-  margin-bottom: 18px;
-  box-shadow: 0 5px 18px #142b4a18;
-}
+    .panel {
+      background: white;
+      padding: 20px;
+      border-radius: 16px;
+      margin-bottom: 20px;
+      box-shadow: 0 3px 12px rgba(20,43,74,0.08);
+    }
 
-label {
-  display: block;
-  font-weight: bold;
-  margin-bottom: 9px;
-}
+    label {
+      display: block;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
 
-select {
-  width: 100%;
-  padding: 13px;
-  border: 2px solid var(--sky);
-  border-radius: 12px;
-  font-size: 16px;
-  color: var(--navy);
-  background: white;
-}
+    select {
+      width: 100%;
+      padding: 13px;
+      border: 2px solid var(--sky);
+      border-radius: 10px;
+      font-size: 16px;
+      color: var(--navy);
+      background: white;
+    }
 
-.question {
-  text-align: center;
-  font-size: 23px;
-  font-weight: bold;
-  color: var(--burgundy);
-  margin: 10px 0 20px;
-}
+    .round-title {
+      text-align: center;
+      color: var(--burgundy);
+      font-size: 23px;
+      margin: 10px 0 20px;
+    }
 
-.round {
-  text-align: center;
-  color: var(--navy);
-  font-weight: bold;
-  margin-bottom: 10px;
-}
+    .players {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 15px;
+      align-items: start;
+    }
 
-.players {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 14px;
-}
+    .player {
+      min-width: 0;
+      background: var(--light);
+      padding: 12px;
+      border-radius: 14px;
+      text-align: center;
+      overflow: hidden;
+    }
 
-.player {
-  text-align: center;
-  background: var(--light);
-  border: 2px solid var(--sky);
-  border-radius: 16px;
-  padding: 12px;
-  min-width: 0;
-}
+    .player h3 {
+      color: var(--navy);
+      margin: 5px 0 12px;
+      font-size: 21px;
+    }
 
-.player h3 {
-  color: var(--navy);
-  margin: 5px 0 12px;
-}
+    /* الصور تظهر كاملة مهما كان طولها أو عرضها */
+    .player img {
+      display: block;
+      width: 100%;
+      height: auto;
+      max-width: 100%;
+      max-height: none;
+      object-fit: contain;
+      object-position: center;
+      border-radius: 10px;
+      background: white;
+    }
 
-/* الصور: عرض كامل بدون قص أو تقريب */
-.player img {
-  display: block;
-  width: 100%;
-  height: 360px;
-  object-fit: contain;
-  object-position: center;
-  border-radius: 12px;
-  background: white;
-}
+    .choices {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-top: 20px;
+    }
 
-button {
-  border: none;
-  border-radius: 12px;
-  padding: 13px 17px;
-  font-size: 16px;
-  font-weight: bold;
-  cursor: pointer;
-  margin: 5px;
-}
+    button {
+      cursor: pointer;
+      border: none;
+      border-radius: 10px;
+      padding: 13px 8px;
+      font-size: 16px;
+      font-weight: bold;
+      background: var(--navy);
+      color: white;
+      transition: 0.2s;
+    }
 
-.vote {
-  width: 100%;
-  background: var(--burgundy);
-  color: white;
-}
+    button:hover {
+      opacity: 0.85;
+    }
 
-.vote:hover {
-  background: var(--navy);
-}
+    button:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
 
-.both {
-  display: block;
-  width: 100%;
-  background: var(--navy);
-  color: white;
-  margin: 15px 0;
-}
+    .both-button {
+      background: var(--burgundy);
+    }
 
-.nav-buttons {
-  display: flex;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  margin-top: 15px;
-}
+    .navigation {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 20px;
+    }
 
-.nav-buttons button {
-  background: var(--sky);
-  color: var(--navy);
-}
+    .navigation button {
+      flex: 1;
+      background: var(--burgundy);
+    }
 
-.nav-buttons button:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
+    .progress {
+      text-align: center;
+      margin: 15px 0;
+      font-weight: bold;
+      color: var(--navy);
+    }
 
-.status {
-  text-align: center;
-  font-weight: bold;
-  margin: 12px 0;
-  min-height: 22px;
-}
+    .message {
+      text-align: center;
+      padding: 12px;
+      margin-top: 15px;
+      border-radius: 10px;
+      font-weight: bold;
+      background: var(--sky);
+      color: var(--navy);
+      display: none;
+    }
 
-.progress {
-  height: 10px;
-  background: var(--sky);
-  border-radius: 20px;
-  overflow: hidden;
-  margin: 15px 0;
-}
+    .results h2 {
+      text-align: center;
+      color: var(--burgundy);
+    }
 
-.progress-bar {
-  height: 100%;
-  background: var(--burgundy);
-  width: 0%;
-}
+    .result-row {
+      margin: 20px 0;
+    }
 
-.result-row {
-  margin: 18px 0;
-}
+    .result-label {
+      display: flex;
+      justify-content: space-between;
+      font-weight: bold;
+      margin-bottom: 8px;
+    }
 
-.result-label {
-  display: flex;
-  justify-content: space-between;
-  font-weight: bold;
-  margin-bottom: 7px;
-}
+    .bar {
+      height: 20px;
+      background: #e5e5e5;
+      border-radius: 20px;
+      overflow: hidden;
+    }
 
-.result-track {
-  background: var(--sky);
-  height: 16px;
-  border-radius: 20px;
-  overflow: hidden;
-}
+    .bar-fill {
+      height: 100%;
+      width: 0%;
+      transition: width 0.4s;
+    }
 
-.result-fill {
-  height: 100%;
-  background: var(--burgundy);
-}
+    .eric-fill {
+      background: var(--navy);
+    }
 
-.winner {
-  text-align: center;
-  padding: 20px;
-  border-radius: 15px;
-  background: var(--light);
-  color: var(--burgundy);
-  font-size: 22px;
-  font-weight: bold;
-}
+    .martin-fill {
+      background: var(--burgundy);
+    }
 
-@media (max-width: 520px) {
-  body {
-    padding: 12px;
-  }
+    .winner {
+      text-align: center;
+      font-size: 24px;
+      font-weight: bold;
+      color: var(--burgundy);
+      margin-top: 20px;
+    }
 
-  .player img {
-    height: 300px;
-  }
+    .total {
+      text-align: center;
+      color: var(--navy);
+      font-weight: bold;
+    }
 
-  header h1 {
-    font-size: 27px;
-  }
+    footer {
+      text-align: center;
+      padding: 20px;
+      color: var(--navy);
+    }
 
-  .question {
-    font-size: 20px;
-  }
+    @media (max-width: 600px) {
+      body {
+        padding: 10px;
+      }
 
-  .players {
-    gap: 8px;
-  }
+      header h1 {
+        font-size: 25px;
+      }
 
-  .player {
-    padding: 8px;
-  }
-}
-</style>
+      .players {
+        gap: 8px;
+      }
+
+      .player {
+        padding: 7px;
+      }
+
+      .player h3 {
+        font-size: 17px;
+      }
+
+      .choices {
+        gap: 6px;
+      }
+
+      button {
+        font-size: 14px;
+        padding: 12px 5px;
+      }
+    }
+  </style>
 </head>
 
 <body>
+
 <div class="container">
 
-<header>
-  <h1>ERIC VS MARTIN</h1>
-  <p>The Ultimate Photo Battle</p>
-</header>
+  <header>
+    <h1>ERIC VS MARTIN</h1>
+    <p>Who is the best?</p>
+  </header>
 
-<div class="panel">
-  <label for="voter">Choose your name:</label>
-  <select id="voter">
-    <option value="husseina">Husseina</option>
-    <option value="layla">Layla</option>
-  </select>
-  <p class="status" id="connection">Connecting...</p>
-</div>
+  <section class="panel">
+    <label for="voter">Choose your name:</label>
+    <select id="voter">
+      <option value="">Select your name</option>
+      <option value="husseina">Husseina</option>
+      <option value="layla">Layla</option>
+    </select>
+  </section>
 
-<div class="panel" id="game">
-  <div class="round" id="roundText"></div>
+  <main id="game" class="panel">
+    <div class="progress" id="progress"></div>
+    <h2 class="round-title" id="question"></h2>
 
-  <div class="progress">
-    <div class="progress-bar" id="progressBar"></div>
-  </div>
+    <div class="players">
 
-  <div class="question" id="question"></div>
+      <div class="player">
+        <h3>ERIC</h3>
+        <img id="ericImage" src="" alt="Eric photo">
+      </div>
 
-  <div class="players">
+      <div class="player">
+        <h3>MARTIN</h3>
+        <img id="martinImage" src="" alt="Martin photo">
+      </div>
 
-    <div class="player">
-      <h3>ERIC</h3>
-      <img id="ericImage" src="images/eric-1.jpg" alt="Eric photo">
-      <button class="vote" onclick="submitVote('Eric')">Vote Eric</button>
     </div>
 
-    <div class="player">
-      <h3>MARTIN</h3>
-      <img id="martinImage" src="images/martin-1.jpg" alt="Martin photo">
-      <button class="vote" onclick="submitVote('Martin')">Vote Martin</button>
+    <div class="choices">
+      <button onclick="submitVote('Eric')">Eric</button>
+      <button onclick="submitVote('Martin')">Martin</button>
+      <button class="both-button" onclick="submitVote('Both')">Both</button>
     </div>
 
-  </div>
+    <div class="message" id="message"></div>
 
-  <button class="both" onclick="submitVote('Both')">Both ❤️</button>
+    <div class="navigation">
+      <button onclick="previousRound()">Previous</button>
+      <button onclick="nextRound()">Next</button>
+    </div>
+  </main>
 
-  <div class="status" id="status"></div>
+  <section class="panel results">
+    <h2>FINAL RESULTS</h2>
 
-  <div class="nav-buttons">
-    <button id="prevBtn" onclick="changeRound(-1)">← Previous</button>
-    <button id="nextBtn" onclick="changeRound(1)">Next →</button>
-  </div>
-</div>
-
-<div class="panel">
-  <h2 style="text-align:center;color:#800020">Voting Results</h2>
-  <div id="results">Loading results...</div>
-</div>
-
-<footer style="text-align:center;padding:15px;color:#142B4A">
-  Made with love ♡ Eric vs Martin
-</footer>
-
-</div>
-
-<script>
-const SUPABASE_URL = "https://jentdsqzefncwrvcrtib.supabase.co";
-const SUPABASE_ANON_KEY = "sb_publishable_hYILoPDfZwAzwjPC7-Bbnw_FVNUlwYv";
-
-const db = window.supabase.createClient(
-  SUPABASE_URL,
-  SUPABASE_ANON_KEY
-);
-
-const questions = [
-  "First Club They Played For",
-  "First Appearance with the National Team",
-  "Best Look in Their Current Clubs",
-  "Their Prime",
-  "Best Outfit They Have Worn",
-  "Best Haircut",
-  "Their Look in the Latest Advertisement",
-  "Their Look in the Latest World Cup",
-  "Worst Photo"
-];
-
-let currentRound = 1;
-let myVotes = {};
-
-const voterSelect = document.getElementById("voter");
-
-async function checkConnection() {
-  const { error } = await db.from("votes").select("id").limit(1);
-
-  document.getElementById("connection").textContent =
-    error
-      ? "Connection error: " + error.message
-      : "Connected successfully ✓";
-}
-
-async function loadMyVotes() {
-  const voter = voterSelect.value;
-
-  const { data, error } = await db
-    .from("votes")
-    .select("round_no, choice")
-    .eq("voter_id", voter);
-
-  if (error) {
-    document.getElementById("status").textContent = error.message;
-    return;
-  }
-
-  myVotes = {};
-
-  data.forEach(vote => {
-    myVotes[vote.round_no] = vote.choice;
-  });
-
-  renderRound();
-}
-
-function renderRound() {
-  document.getElementById("roundText").textContent =
-    `ROUND ${currentRound} OF 9`;
-
-  document.getElementById("question").textContent =
-    questions[currentRound - 1];
-
-  document.getElementById("ericImage").src =
-    `images/eric-${currentRound}.jpg`;
-
-  document.getElementById("martinImage").src =
-    `images/martin-${currentRound}.jpg`;
-
-  document.getElementById("progressBar").style.width =
-    `${(currentRound / 9) * 100}%`;
-
-  document.getElementById("prevBtn").disabled =
-    currentRound === 1;
-
-  document.getElementById("nextBtn").disabled =
-    currentRound === 9;
-
-  document.getElementById("status").textContent =
-    myVotes[currentRound]
-      ? `Your vote: ${myVotes[currentRound]} ✓`
-      : "Choose your favorite photo!";
-}
-
-async function submitVote(choice) {
-  const voter = voterSelect.value;
-
-  if (myVotes[currentRound]) {
-    alert("You have already voted in this round!");
-    return;
-  }
-
-  const { error } = await db.from("votes").insert({
-    voter_id: voter,
-    round_no: currentRound,
-    choice: choice
-  });
-
-  if (error) {
-    if (error.code === "23505") {
-      alert("You have already voted in this round!");
-      await loadMyVotes();
-    } else {
-      alert("Vote failed: " + error.message);
-    }
-    return;
-  }
-
-  myVotes[currentRound] = choice;
-
-  document.getElementById("status").textContent =
-    `Your vote: ${choice} ✓`;
-
-  alert("Your vote has been saved!");
-
-  await loadResults();
-}
-
-function changeRound(direction) {
-  currentRound += direction;
-
-  if (currentRound < 1) currentRound = 1;
-  if (currentRound > 9) currentRound = 9;
-
-  renderRound();
-}
-
-async function loadResults() {
-  const { data, error } = await db
-    .from("votes")
-    .select("round_no, choice");
-
-  const results = document.getElementById("results");
-
-  if (error) {
-    results.textContent =
-      "Could not load results: " + error.message;
-    return;
-  }
-
-  let eric = 0;
-  let martin = 0;
-
-  data.forEach(vote => {
-    if (vote.choice === "Eric") eric += 1;
-    if (vote.choice === "Martin") martin += 1;
-
-    if (vote.choice === "Both") {
-      eric += 0.5;
-      martin += 0.5;
-    }
-  });
-
-  const total = eric + martin;
-
-  const ericPercent = total ? (eric / total) * 100 : 0;
-  const martinPercent = total ? (martin / total) * 100 : 0;
-
-  let winner = "It's a tie!";
-
-  if (eric > martin) winner = "ERIC WINS!";
-  if (martin > eric) winner = "MARTIN WINS!";
-
-  results.innerHTML = `
     <div class="result-row">
       <div class="result-label">
         <span>ERIC</span>
-        <span>${ericPercent.toFixed(1)}%</span>
+        <span id="ericPercent">0%</span>
       </div>
-      <div class="result-track">
-        <div class="result-fill" style="width:${ericPercent}%"></div>
+      <div class="bar">
+        <div class="bar-fill eric-fill" id="ericBar"></div>
       </div>
     </div>
 
     <div class="result-row">
       <div class="result-label">
         <span>MARTIN</span>
-        <span>${martinPercent.toFixed(1)}%</span>
+        <span id="martinPercent">0%</span>
       </div>
-      <div class="result-track">
-        <div class="result-fill" style="width:${martinPercent}%"></div>
+      <div class="bar">
+        <div class="bar-fill martin-fill" id="martinBar"></div>
       </div>
     </div>
 
-    <div class="winner">${winner}</div>
+    <p class="total" id="totalVotes">0 / 18 votes</p>
+    <div class="winner" id="winner">Waiting for votes...</div>
+  </section>
 
-    <p style="text-align:center">
-      Total votes: ${data.length} / 18
-    </p>
-  `;
-}
+  <footer>
+    E&M GAME BY ENZO
+  </footer>
 
-voterSelect.addEventListener("change", loadMyVotes);
+</div>
 
-checkConnection();
-loadMyVotes();
-loadResults();
+<script>
+  const SUPABASE_URL =
+    "https://jentdsqzefncwrvcrtib.supabase.co";
+
+  const SUPABASE_ANON_KEY =
+    "sb_publishable_hYILoPDfZwAzwjPC7-Bbnw_FVNUlwYv";
+
+  const db = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_ANON_KEY
+  );
+
+  const questions = [
+    "First Club They Played For",
+    "First Appearance with the National Team",
+    "Best Look in Their Current Clubs",
+    "Their Prime",
+    "Best Outfit They Have Worn",
+    "Best Haircut",
+    "Their Look in the Latest Advertisement",
+    "Their Look in the Latest World Cup",
+    "Worst Photo"
+  ];
+
+  let currentRound = 1;
+
+  function showRound() {
+    document.getElementById("progress").textContent =
+      "ROUND " + currentRound + " / 9";
+
+    document.getElementById("question").textContent =
+      questions[currentRound - 1];
+
+    document.getElementById("ericImage").src =
+      "images/eric-" + currentRound + ".jpg";
+
+    document.getElementById("martinImage").src =
+      "images/martin-" + currentRound + ".jpg";
+
+    document.getElementById("message").style.display = "none";
+  }
+
+  function showMessage(text) {
+    const message = document.getElementById("message");
+    message.textContent = text;
+    message.style.display = "block";
+  }
+
+  async function submitVote(choice) {
+    const voter = document.getElementById("voter").value;
+
+    if (!voter) {
+      showMessage("Please choose your name first.");
+      return;
+    }
+
+    const { data: existing, error: checkError } = await db
+      .from("votes")
+      .select("id")
+      .eq("voter_id", voter)
+      .eq("round_no", currentRound);
+
+    if (checkError) {
+      showMessage("Error checking vote: " + checkError.message);
+      return;
+    }
+
+    if (existing && existing.length > 0) {
+      showMessage("You have already voted in this round!");
+      return;
+    }
+
+    const { error } = await db
+      .from("votes")
+      .insert({
+        voter_id: voter,
+        round_no: currentRound,
+        choice: choice
+      });
+
+    if (error) {
+      if (error.code === "23505") {
+        showMessage("You have already voted in this round!");
+      } else {
+        showMessage("Vote error: " + error.message);
+      }
+      return;
+    }
+
+    showMessage("Your vote has been saved!");
+
+    await loadResults();
+  }
+
+  function nextRound() {
+    if (currentRound < 9) {
+      currentRound++;
+      showRound();
+    }
+  }
+
+  function previousRound() {
+    if (currentRound > 1) {
+      currentRound--;
+      showRound();
+    }
+  }
+
+  async function loadResults() {
+    const { data, error } = await db
+      .from("votes")
+      .select("round_no, choice");
+
+    if (error) {
+      document.getElementById("winner").textContent =
+        "Could not load results.";
+      return;
+    }
+
+    let eric = 0;
+    let martin = 0;
+
+    data.forEach(vote => {
+      if (vote.choice === "Eric") {
+        eric += 1;
+      }
+
+      if (vote.choice === "Martin") {
+        martin += 1;
+      }
+
+      if (vote.choice === "Both") {
+        eric += 0.5;
+        martin += 0.5;
+      }
+    });
+
+    const total = eric + martin;
+
+    const ericPercent = total === 0
+      ? 0
+      : (eric / total) * 100;
+
+    const martinPercent = total === 0
+      ? 0
+      : (martin / total) * 100;
+
+    document.getElementById("ericPercent").textContent =
+      ericPercent.toFixed(1) + "%";
+
+    document.getElementById("martinPercent").textContent =
+      martinPercent.toFixed(1) + "%";
+
+    document.getElementById("ericBar").style.width =
+      ericPercent + "%";
+
+    document.getElementById("martinBar").style.width =
+      martinPercent + "%";
+
+    document.getElementById("totalVotes").textContent =
+      data.length + " / 18 votes";
+
+    let winner = "It's a tie!";
+
+    if (total === 0) {
+      winner = "Waiting for votes...";
+    } else if (eric > martin) {
+      winner = "ERIC WINS!";
+    } else if (martin > eric) {
+      winner = "MARTIN WINS!";
+    }
+
+    document.getElementById("winner").textContent = winner;
+  }
+
+  showRound();
+  loadResults();
+
+  // Refresh results periodically so both voters see updates.
+  setInterval(loadResults, 10000);
 </script>
 
 </body>
