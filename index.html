@@ -20,7 +20,6 @@
   --burgundy-light: #A8244B;
   --light: #F2FAFC;
   --text: #49202F;
-  --muted: #8B6874;
 }
 
 * {
@@ -220,7 +219,7 @@ select {
   border-color: #D9A0B2;
 }
 
-/* SHOW THE WHOLE PHOTO */
+/* FULL PHOTO WITHOUT CROPPING */
 
 .player img {
   display: block;
@@ -455,6 +454,103 @@ select {
   margin-top: 5px;
 }
 
+/* GAME OVER SCREEN */
+
+.game-over {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(169,220,235,.96);
+  padding: 20px;
+  align-items: center;
+  justify-content: center;
+  overflow-y: auto;
+}
+
+.game-over-card {
+  width: 100%;
+  max-width: 480px;
+  padding: 35px 22px;
+  text-align: center;
+  background: white;
+  border: 3px solid var(--burgundy);
+  border-radius: 25px;
+  box-shadow: 0 15px 45px #80002030;
+}
+
+.game-crown {
+  font-size: 65px;
+  color: var(--burgundy);
+}
+
+.game-over-label {
+  color: var(--sky-dark);
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 900;
+  letter-spacing: 3px;
+  font-size: 12px;
+}
+
+.game-over-card h1 {
+  color: var(--burgundy);
+  font-family: 'Orbitron', sans-serif;
+  font-size: clamp(30px, 8vw, 46px);
+  margin: 15px 0;
+}
+
+.champion-title {
+  color: var(--sky-dark);
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 900;
+}
+
+.game-over-card h2 {
+  color: var(--burgundy);
+  font-family: 'Orbitron', sans-serif;
+  font-size: 30px;
+  font-weight: 900;
+}
+
+.final-score {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin: 25px 0;
+}
+
+.final-score div {
+  padding: 18px 8px;
+  border-radius: 15px;
+  background: #EAF7FB;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 900;
+}
+
+.final-score strong {
+  color: var(--burgundy);
+  font-size: 25px;
+}
+
+#finalVotes {
+  color: var(--burgundy);
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 900;
+}
+
+.game-over-message {
+  margin-top: 20px;
+  padding: 15px;
+  color: white;
+  background: var(--burgundy);
+  border-radius: 12px;
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 900;
+}
+
 /* FOOTER */
 
 footer {
@@ -646,6 +742,34 @@ footer span {
   </div>
 </section>
 
+<!-- GAME OVER SCREEN -->
+
+<div class="game-over" id="gameOver">
+  <div class="game-over-card">
+    <div class="game-crown">♛</div>
+    <div class="game-over-label">THE BATTLE IS OVER</div>
+    <h1>GAME OVER</h1>
+    <p class="champion-title">THE CHAMPION IS</p>
+    <h2 id="finalWinner">ERIC 👑</h2>
+
+    <div class="final-score">
+      <div>
+        <span>ERIC</span>
+        <strong id="finalEric">0%</strong>
+      </div>
+      <div>
+        <span>MARTIN</span>
+        <strong id="finalMartin">0%</strong>
+      </div>
+    </div>
+
+    <p id="finalVotes">18 / 18 VOTES</p>
+    <div class="game-over-message">
+      ♛ CONGRATULATIONS! ♛
+    </div>
+  </div>
+</div>
+
 <footer>
   <span>♛</span> E&M GAME BY ENZO <span>♛</span>
 </footer>
@@ -653,6 +777,9 @@ footer span {
 </div>
 
 <script>
+
+/* SUPABASE CONNECTION */
+
 const SUPABASE_URL =
   "https://jentdsqzefncwrvcrtib.supabase.co";
 
@@ -663,6 +790,8 @@ const db = window.supabase.createClient(
   SUPABASE_URL,
   SUPABASE_ANON_KEY
 );
+
+/* GAME QUESTIONS */
 
 const questions = [
   "First Club They Played For",
@@ -677,6 +806,8 @@ const questions = [
 ];
 
 let currentRound = 1;
+
+/* DISPLAY ROUND */
 
 function showRound() {
   document.getElementById("progress").textContent =
@@ -696,11 +827,15 @@ function showRound() {
   loadRoundResults();
 }
 
+/* MESSAGE */
+
 function showMessage(text) {
   const box = document.getElementById("message");
   box.textContent = text;
   box.style.display = "block";
 }
+
+/* SUBMIT VOTE */
 
 async function submitVote(choice) {
   const voter = document.getElementById("voter").value;
@@ -749,6 +884,8 @@ async function submitVote(choice) {
   await loadRoundResults();
 }
 
+/* ROUND RESULTS */
+
 async function loadRoundResults() {
   const { data, error } = await db
     .from("votes")
@@ -784,10 +921,12 @@ async function loadRoundResults() {
     ericPct + "%";
 }
 
+/* GLOBAL RESULTS AND GAME OVER */
+
 async function loadResults() {
   const { data, error } = await db
     .from("votes")
-    .select("round_no, choice");
+    .select("voter_id, round_no, choice");
 
   if (error) {
     document.getElementById("winner").textContent =
@@ -797,6 +936,8 @@ async function loadResults() {
 
   let eric = 0;
   let martin = 0;
+  let husseinaVotes = 0;
+  let laylaVotes = 0;
 
   data.forEach(vote => {
     if (vote.choice === "Eric") eric++;
@@ -806,6 +947,9 @@ async function loadResults() {
       eric += 0.5;
       martin += 0.5;
     }
+
+    if (vote.voter_id === "husseina") husseinaVotes++;
+    if (vote.voter_id === "layla") laylaVotes++;
   });
 
   const total = eric + martin;
@@ -827,18 +971,50 @@ async function loadResults() {
   document.getElementById("totalVotes").textContent =
     data.length + " / 18 VOTES";
 
-  let winner = "♛ IT'S A TIE!";
+  let winner = "♛ WAITING FOR VOTES...";
 
-  if (total === 0) {
-    winner = "♛ WAITING FOR VOTES...";
-  } else if (eric > martin) {
+  if (total > 0 && eric > martin) {
     winner = "♛ ERIC WINS!";
-  } else if (martin > eric) {
+  } else if (total > 0 && martin > eric) {
     winner = "♛ MARTIN WINS!";
+  } else if (total > 0 && eric === martin) {
+    winner = "♛ IT'S A TIE!";
   }
 
   document.getElementById("winner").textContent = winner;
+
+  /* CHECK ALL 18 VOTES */
+
+  if (husseinaVotes === 9 && laylaVotes === 9) {
+
+    document.getElementById("finalEric").textContent =
+      ericPct.toFixed(1) + "%";
+
+    document.getElementById("finalMartin").textContent =
+      martinPct.toFixed(1) + "%";
+
+    document.getElementById("finalVotes").textContent =
+      data.length + " / 18 VOTES COMPLETED";
+
+    let finalWinner = "IT'S A TIE! 👑";
+
+    if (eric > martin) {
+      finalWinner = "ERIC 👑";
+    } else if (martin > eric) {
+      finalWinner = "MARTIN 👑";
+    }
+
+    document.getElementById("finalWinner").textContent =
+      finalWinner;
+
+    document.getElementById("gameOver").style.display = "flex";
+
+  } else {
+    document.getElementById("gameOver").style.display = "none";
+  }
 }
+
+/* NAVIGATION */
 
 function nextRound() {
   if (currentRound < 9) {
@@ -854,13 +1030,18 @@ function previousRound() {
   }
 }
 
+/* START GAME */
+
 showRound();
 loadResults();
+
+/* AUTO REFRESH */
 
 setInterval(() => {
   loadResults();
   loadRoundResults();
 }, 10000);
+
 </script>
 
 </body>
